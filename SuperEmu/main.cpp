@@ -12,21 +12,6 @@ typedef uint_least8_t w8;		//Certain elements (i.e. registers) are all a byte wi
 typedef uint_least16_t w16;		//Certain elements (i.e. program counter) are two bytes wide
 typedef uint_least64_t w64;		//Certain elements (i.e. clock cycle counter) require more bytes
 
-//Represents the NES hardware
-struct system {
-	CPU cu;
-	PPU pu;
-	APU au;
-
-	//Updates the clock rate of the system - CPU, PPU, and APU all run simulataneously in this implementation
-	virtual void clock() {
-		//Picture Processing Unit - Runs 3x as fast as CPU
-		for (int i = 0; i < 3; ++i) cu.cyc();
-		//Audio Processing Unit - Runs 1x as fast as CPU
-		for (int i = 0; i < 1; ++i) au.cyc();
-	}
-};
-
 //Instruction Package - Allows for simpler opcode functionality / Saves space
 struct ins {
 	w16 address;				//Address
@@ -125,10 +110,116 @@ struct reg : CPU {
 
 };
 
+//Picture Processing Unit
+struct PPU {
+	PPU() = default;
+	virtual ~PPU() = default;
+
+	void cyc() {
+
+	}
+};
+
+
+//Audio Processing Unit
+struct APU {
+	APU() = default;
+	virtual ~APU() = default;
+
+	void cyc() {
+
+	}
+};
+
+//Memory Representation
+struct mem {
+	mem() = default;
+	virtual ~mem() = default;
+
+	//Read & Write Functions for the CPU, PPU, and APU each
+	/*With the way inheritance is done here, it would make sense to make these functions
+	  virtual and only have one algorithm that changes based on the type of pointer
+	  using it. Not sure if this is possible or not here, and may not make a huge impact
+	  on efficency, mainly impressive in saving lines of code...?*/
+
+	w8 readC(w16 adr) {
+
+	}
+
+	w8 writeC(w16 adr, w8 out) {
+
+	}
+
+	w8 readP(w16 adr) {
+
+	}
+
+	w8 writeP(w16 adr, w8 out) {
+
+	}
+
+	w8 readA(w16 adr) {
+
+	}
+
+	w8 writeA(w16 adr, w8 out) {
+
+	}
+};
+
+//CPU Representation in Memory
+struct central : mem {
+	mem * cm;
+
+
+};
+
+//PPU Representation in Memory
+struct picture : mem {
+	mem * pm;
+
+};
+
+//APU Representation in Memory
+struct audio : mem {
+	mem * am;
+
+};
+
+
+//ROM File Game Pack Representation
+struct cart {
+
+};
+
+
+//Input & Output Representation
+struct con {
+
+};
+
+//Represents the NES hardware
+struct system {
+	CPU cu;
+	PPU pu;
+	APU au;
+	cart ridge;
+	con one;
+	con two;
+	mem ram;
+
+	//Updates the clock rate of the system - CPU, PPU, and APU all run simulataneously in this implementation
+	/*virtual void clock() {
+	//Picture Processing Unit - Runs 3x as fast as CPU
+	for (int i = 0; i < 3; ++i) cu.cyc();
+	//Audio Processing Unit - Runs 1x as fast as CPU
+	for (int i = 0; i < 1; ++i) au.cyc();
+	}*/
+};
 
 //Representation & Functionality for every opcode
 struct ops : system {
-	
+
 	reg * cup;
 
 	//Opcode Functions, mapped via the switch statement
@@ -381,7 +472,7 @@ struct ops : system {
 	void sec(ins * u) { cup->carry = true; }
 
 	//SED   - Set Decimal Mode
-	void sed(ins * u) {	cup->decimal = true; }
+	void sed(ins * u) { cup->decimal = true; }
 
 	//SEI   - Set Interrupt Disable Status
 	void sei(ins * u) { cup->interupt = true; }
@@ -430,7 +521,7 @@ struct ops : system {
 	}
 
 	//TXS   - Transfer Index X to Stack Pointer
-	void txs(ins * u) {	cup->s = cup->x; }
+	void txs(ins * u) { cup->s = cup->x; }
 
 	//TYA   - Transfer Index Y to Accumulator
 	void tya(ins * u) {
@@ -775,33 +866,6 @@ struct ops : system {
 		case '0xFF': isc(u); break;
 		}
 	}
-
-
-};
-
-
-//Picture Processing Unit
-struct PPU {
-	PPU() = default;
-	virtual ~PPU() = default;
-
-	void cyc() {
-
-	}
-};
-
-//Audio Processing Unit
-struct APU {
-	APU() = default;
-	virtual ~APU() = default;
-
-	void cyc() {
-
-	}
-};
-
-//Memory Representation
-struct mem : system {
 
 };
 
