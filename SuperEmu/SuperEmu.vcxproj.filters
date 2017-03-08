@@ -19,4 +19,30 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="cpu.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="instruction.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ppu.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="apu.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mem.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cartridge.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="controller.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nes.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>

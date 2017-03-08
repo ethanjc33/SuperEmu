@@ -144,6 +144,16 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="apu.h" />
+    <ClInclude Include="cartridge.h" />
+    <ClInclude Include="controller.h" />
+    <ClInclude Include="cpu.h" />
+    <ClInclude Include="instruction.h" />
+    <ClInclude Include="mem.h" />
+    <ClInclude Include="nes.h" />
+    <ClInclude Include="ppu.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
