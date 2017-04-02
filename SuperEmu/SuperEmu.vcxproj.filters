@@ -44,5 +44,8 @@
     <ClInclude Include="nes.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="maps.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

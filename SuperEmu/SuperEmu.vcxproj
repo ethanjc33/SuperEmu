@@ -150,6 +150,7 @@
     <ClInclude Include="controller.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="instruction.h" />
+    <ClInclude Include="maps.h" />
     <ClInclude Include="mem.h" />
     <ClInclude Include="nes.h" />
     <ClInclude Include="ppu.h" />

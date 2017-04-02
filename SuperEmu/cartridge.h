@@ -4,10 +4,36 @@
 #ifndef CARTRIDGE_HPP
 #define CARTRIDGE_HPP
 
+#include <vector>
 #include "instruction.h"
 
-//ROM File Game Pack Representation
+
+//Container for ROM-specific details
 struct cart {
+
+	std::vector<w8> prg;	//Container for PRG-ROM banks
+	std::vector<w8> chr;	//Container for CHR-ROM banks
+	w8 map;					//Mapper type - different ROMs use different types (see "maps" class)
+	w8 mir;					//Mirror Mode
+	w8 bat;					//Contains battery
+
+	cart() = default;
+	virtual ~cart() = default;
+
+	cart(std::vector<w8> prg, std::vector<w8> chr, w8 map, w8 mir, w8 bat)
+		:prg(prg), chr(chr), map(map), mir(mir), bat(bat)
+	{ }
+
+	//Creates a new instance of a cartridge when starting up the emulator
+	cart * createCart(std::vector<w8> prg, std::vector<w8> chr, w8 map, w8 mir, w8 bat) {
+		return &cart(prg, chr, map, mir, bat);
+	}
+
+};
+
+
+//ROM File Game Pack Representation
+struct rom {
 	/*Reads from an iNES file (the 'standard' for emulator reading) and ultimately returns a cartridge
 	All iNES files open with the same header format, so we can parse through that byte by byte.
 	Actual NES cartridges had all the coded information located in different places, so this
