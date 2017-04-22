@@ -12,9 +12,9 @@ void * maps::createMaps(sys * s) {
 	//1 - Mapper 1, 2 - Mapper 2, and so on
 
 	switch (r.map) {
-	case '0': return m2.createM2(r); break;
-	case '1': return m1.createM1(&r); break;
-	case '2': return m2.createM2(r); break;
+	case '0': return (m2 = new maps2(r)); break;
+	case '1': return (m1 = new maps1(&r));
+	case '2': return (m2 = new maps2(r)); break;
 	case '3': return m3.createM3(r); break;
 	case '4': return m4.createM4(r); break;
 	case '7': return m7.createM7(r); break;

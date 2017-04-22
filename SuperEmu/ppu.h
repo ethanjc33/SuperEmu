@@ -11,6 +11,38 @@ struct sys;
 
 #include "nes.h"
 
+//PPU Register Packages - contains elements necessary for those functions defined in ppu.h
+//Most will be used as boolean (b) flags, necessary to be 8-Bit values since we shift bits
+
+//$2000 (PPUCTRL)
+struct ctrlP {
+	w8 bNames;
+	w8 bUpper;
+	w8 bSprites;
+	w8 bBack;
+	w8 bSize;
+	w8 bMS;
+};
+
+//$2001 (PPUMASK)
+struct maskP {
+	w8 bScale;
+	w8 bLBack;
+	w8 bLSprite;
+	w8 bBack;
+	w8 bSprites;
+	w8 red;
+	w8 green;
+	w8 blue;
+};
+
+//$2002 (PPUSTATUS)
+struct statP {
+	w8 bZero;
+	w8 bOverflow;
+};
+
+
 //Components of the PPU
 struct PPU {
 
@@ -46,7 +78,7 @@ struct PPU {
 	statP stap;							//Access to boolean bits required by [$2002]
 
 	//Memory Representation
-	picture pMem;						//PPU Memory
+	picture * pMem;						//PPU Memory
 	w8 data;							//When reading from $2003
 
 	//CPU
@@ -54,8 +86,9 @@ struct PPU {
 
 
 	//Constructors & Destructor
-	PPU() = default;
-	~PPU() { delete this; }
+	PPU();
+	PPU(sys * s);
+	~PPU();
 
 
 	//Memory mapped registers to the CPU
@@ -146,7 +179,7 @@ struct PPU {
 
 	//PPU data read/write, handle buffers and addresses [$2007]
 	w8 PPUrData() {
-		w8 hold1 = this->pMem.read(this->sv);
+		w8 hold1 = this->pMem->read(this->sv);
 
 		if ((this->sv % 0x4000) < 0x3F00) {
 			w8 hold2;
@@ -155,7 +188,7 @@ struct PPU {
 			hold1 = hold2;
 		}
 
-		else this->buffer = this->pMem.read(this->sv - 0x1000);
+		else this->buffer = this->pMem->read(this->sv - 0x1000);
 
 		if (this->rolp.bUpper == 0) this->sv += 1;
 		else this->sv += 0x20;
@@ -164,7 +197,7 @@ struct PPU {
 	}
 
 	void PPUwData(w8 out) {
-		this->pMem.write(this->sv, out);
+		this->pMem->write(this->sv, out);
 		if (this->rolp.bUpper == 0) this->sv += 1;
 		else this->sv += 0x20;
 	}
@@ -174,7 +207,7 @@ struct PPU {
 		w16 hold = (w16(out) << 8);
 
 		for (int i = 0; i < 0x100; ++i) {
-			this->oam[this->data] = this->cc.cMem.read(hold);
+			this->oam[this->data] = this->cc.cMem->read(hold);
 			++hold;
 			this->data++;
 		}
@@ -184,8 +217,6 @@ struct PPU {
 
 		if ((this->cc.cycles % 2) == 1) this->cc.staller++;
 	}
-
-	PPU * createPPU(sys * s);
 
 	//Process a cycle in the PPU
 	void execute() {

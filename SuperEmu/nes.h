@@ -25,9 +25,6 @@ struct sys {
 
 	std::vector<w8> ram;	//RAM representation
 
-	sys() = default;
-	~sys() = default;
-
 	//Updates the clock rate of the system - CPU, PPU, and APU all run simulataneously in this implementation
 	void clock() {
 		//Picture Processing Unit - Runs 3x as fast as CPU
@@ -35,6 +32,8 @@ struct sys {
 		//Audio Processing Unit - Runs 1x as fast as CPU
 		for (int i = 0; i < 1; ++i) au.cyc();
 	}
+
+
 
 };
 

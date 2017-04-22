@@ -7,12 +7,8 @@
 
 //CPU
 
-central * central::createCentral(sys * s) {
-	central * x = new central;
-	x->cm = s;
-	return x;
-}
-
+central::central(sys * s)
+	:cm(s) { }
 
 //Overrides
 
@@ -89,13 +85,10 @@ void central:: write(w16 adr, w8 out) {
 
 //PPU
 
-//Creation of PPU Memory
-picture * picture::createPM(sys * s) {
-	picture * x = new picture;
-	x->pm = s;
-	return x;
-}
+picture::picture(sys * s)
+	:pm(s) { }
 
+//Overrides
 
 w8 picture::read(w16 adr) {
 	adr %= 0x4000;

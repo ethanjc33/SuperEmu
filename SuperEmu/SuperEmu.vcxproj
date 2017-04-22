@@ -142,6 +142,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cartridge.cpp" />
+    <ClCompile Include="cpu.cpp" />
+    <ClCompile Include="instruction.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="maps.cpp" />
     <ClCompile Include="mem.cpp" />

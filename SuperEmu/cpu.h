@@ -12,76 +12,31 @@
 
 struct sys;
 
+//Address Modes for CPU (helpful in determining address for instructions)
+namespace modeEnum {
+	enum sourceMode {
+		zop = 0, zpx, zpy,				//Zero Page, Zero Page (x), Zero Page (y)
+		abs, abx, aby,					//Absolute, Absolute (x), Absolute (y)
+		xid, ind, idx,					//Indexed Indirect, Indirect, Indirect Indexed
+		rel, acc, imm, imp,				//Relative, Accumulator, Immediate, Implicit
+		siz = 256						//Size Counter for enum arrays
+	};
+}
+
+
+
+//Instruction Package - Allows for simpler opcode functionality / Saves space in repeating opcodes
+struct ins {
+	w16 address;						//Address
+	w16 procou;							//Program Counter
+	modeEnum::sourceMode mode;			//Mode
+};
+
 
 //Global Constants - Necessary for execution of an instruction
 
 //Represents an opcode's addressing mode ID
-modeEnum::sourceMode modes[modeEnum::siz] = {
-	modeEnum::imp, modeEnum::xid, modeEnum::imp, modeEnum::xid,
-	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
-	modeEnum::imp, modeEnum::imm, modeEnum::acc, modeEnum::imm,
-	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
-	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
-	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
-	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
-	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx,
-	modeEnum::abs, modeEnum::xid, modeEnum::imp, modeEnum::xid,
-	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
-	modeEnum::imp, modeEnum::imm, modeEnum::acc, modeEnum::imm,
-	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
-	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
-	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
-	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
-	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx,
-	modeEnum::imp, modeEnum::xid, modeEnum::imp, modeEnum::xid,
-	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
-	modeEnum::imp, modeEnum::imm, modeEnum::acc, modeEnum::imm,
-	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
-	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
-	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
-	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
-	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx,
-	modeEnum::imp, modeEnum::xid, modeEnum::imp, modeEnum::xid,
-	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
-	modeEnum::imp, modeEnum::imm, modeEnum::acc, modeEnum::imm,
-	modeEnum::ind, modeEnum::abs, modeEnum::abs, modeEnum::abs,
-	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
-	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
-	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
-	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx,
-	modeEnum::imm, modeEnum::xid, modeEnum::imm, modeEnum::xid,
-	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
-	modeEnum::imp, modeEnum::imm, modeEnum::imp, modeEnum::imm,
-	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
-	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
-	modeEnum::zpx, modeEnum::zpx, modeEnum::zpy, modeEnum::zpy,
-	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
-	modeEnum::abx, modeEnum::abx, modeEnum::aby, modeEnum::aby,
-	modeEnum::imm, modeEnum::xid, modeEnum::imm, modeEnum::xid,
-	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
-	modeEnum::imp, modeEnum::imm, modeEnum::imp, modeEnum::imm,
-	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
-	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
-	modeEnum::zpx, modeEnum::zpx, modeEnum::zpy, modeEnum::zpy,
-	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
-	modeEnum::abx, modeEnum::abx, modeEnum::aby, modeEnum::aby,
-	modeEnum::imm, modeEnum::xid, modeEnum::imm, modeEnum::xid,
-	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
-	modeEnum::imp, modeEnum::imm, modeEnum::imp, modeEnum::imm,
-	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
-	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
-	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
-	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
-	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx,
-	modeEnum::imm, modeEnum::xid, modeEnum::imm, modeEnum::xid,
-	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
-	modeEnum::imp, modeEnum::imm, modeEnum::imp, modeEnum::imm,
-	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
-	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
-	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
-	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
-	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx
-};
+extern modeEnum::sourceMode modes[modeEnum::siz];
 
 
 //Represents an opcode's number of cycles
@@ -150,12 +105,20 @@ struct CPU {
 	int staller;					//Number of stalled cycles
 
 	//Memory Representation
-	central cMem;					//CPU Memory
+	central * cMem;					//CPU Memory
 
 
 	//Constructors & Destructor
 	CPU() = default;
-	~CPU() { delete this; }
+
+	CPU(sys * x) {
+		cMem = new central(x);
+		s = 253;
+		pc = hilo(65532);
+		set(0x24);
+	}
+
+	~CPU() { delete cMem; }
 
 
 	//Flag Setter Functions - other flags set through indidvual opcode functions
@@ -204,19 +167,6 @@ struct CPU {
 		return hold;
 	}
 
-
-	//Initialization & CPU setup
-
-	//Creation of CPU in system - used in opcodes
-	CPU * createCPU(sys * s) {
-		CPU * x = new CPU;
-		x->cMem.createCentral(s);
-		x->s = 253;
-		x->pc = x->hilo(65532);
-		x->set(0x24);
-		return x;
-	}
-
 	
 	//Misc. Functions...
 
@@ -238,16 +188,16 @@ struct CPU {
 
 	//Returns hi and lo bytes, depending on situation
 	w16 hilo(w16 adr) {
-		w16 hi = this->cMem.read(adr + 1);
-		w16 lo = this->cMem.read(adr);
+		w16 hi = this->cMem->read(adr + 1);
+		w16 lo = this->cMem->read(adr);
 
 		return (hi << 0x08) | lo;
 	}
 
 	//Emulates NES CPU bug found in original hardware
 	w16 oops(w16 adr) {
-		w16 hi = this->cMem.read(w16(w8(adr) + 1));
-		w16 lo = this->cMem.read(adr);
+		w16 hi = this->cMem->read(w16(w8(adr) + 1));
+		w16 lo = this->cMem->read(adr);
 
 		return (hi << 0x08) | lo;
 	}
@@ -271,7 +221,7 @@ struct CPU {
 		this->im = interEnum::no;
 
 		//Fetch Instruction from PC & Match it to proper mode
-		w8 todo = this->cMem.read(this->pc);
+		w8 todo = this->cMem->read(this->pc);
 		this->am = modes[todo];
 
 		//Address and Page Flag
@@ -280,9 +230,9 @@ struct CPU {
 
 		//Solves for correct address location, stops if location does not exist
 		switch (this->am) {
-		case modeEnum::zop: adr = w16(this->cMem.read(1 + this->pc)); break;
-		case modeEnum::zpx: adr = w16(this->cMem.read(1 + this->pc) + this->x); break;
-		case modeEnum::zpy: adr = w16(this->cMem.read(1 + this->pc) + this->y); break;
+		case modeEnum::zop: adr = w16(this->cMem->read(1 + this->pc)); break;
+		case modeEnum::zpx: adr = w16(this->cMem->read(1 + this->pc) + this->x); break;
+		case modeEnum::zpy: adr = w16(this->cMem->read(1 + this->pc) + this->y); break;
 		case modeEnum::abs: adr = this->hilo(1 + this->pc); break;
 		case modeEnum::abx:
 			adr = this->hilo(1 + this->pc) + w16(this->x);
@@ -292,14 +242,14 @@ struct CPU {
 			adr = this->hilo(1 + this->pc) + w16(this->y);
 			page = this->test(adr - w16(this->y), adr);
 			break;
-		case modeEnum::xid: adr = this->oops(w16(this->cMem.read(1 + this->pc) + this->x)); break;
-		case modeEnum::ind: adr = this->oops(w16(this->cMem.read(1 + this->pc))); break;
+		case modeEnum::xid: adr = this->oops(w16(this->cMem->read(1 + this->pc) + this->x)); break;
+		case modeEnum::ind: adr = this->oops(w16(this->cMem->read(1 + this->pc))); break;
 		case modeEnum::idx:
-			adr = this->oops(w16(this->cMem.read(1 + this->pc) + this->y));
+			adr = this->oops(w16(this->cMem->read(1 + this->pc) + this->y));
 			page = this->test(adr - w16(this->y), adr);
 			break;
 		case modeEnum::rel:
-		{	w16 temp = w16(this->cMem.read(1 + this->pc));
+		{	w16 temp = w16(this->cMem->read(1 + this->pc));
 			if (temp >= 80) adr = this->pc + temp + 2;
 			else adr = this->pc + temp - 254;
 			break; }
@@ -331,7 +281,7 @@ struct CPU {
 	//Note: "bytes" here refer to hi and lo
 
 	void push_byte(w8 b) {
-		this->cMem.write((256 | w16(this->s)), b);
+		this->cMem->write((256 | w16(this->s)), b);
 		--s;
 	}
 
@@ -344,7 +294,7 @@ struct CPU {
 
 	w8 pop_byte() {
 		++s;
-		return this->cMem.read((256 | w16(this->s)));
+		return this->cMem->read((256 | w16(this->s)));
 	}
 
 	w16 pop_bytes() {
@@ -380,7 +330,7 @@ struct CPU {
 
 	//ADC   - Add Memory to Accumulator with Carry
 	void adc(ins * u) {
-		w8 x = this->cMem.read(u->address);
+		w8 x = this->cMem->read(u->address);
 		w8 y = this->a;
 		w8 z = this->carry;
 		this->a = x + y + z;
@@ -399,7 +349,7 @@ struct CPU {
 
 	//AND   - "AND" Memory with Accumulator
 	void and(ins * u) {
-		this->a &= this->cMem.read(u->address);
+		this->a &= this->cMem->read(u->address);
 		this->sZero(this->a);
 		this->sNegative(this->a);
 	}
@@ -415,10 +365,10 @@ struct CPU {
 		}
 
 		else {
-			w8 hold = this->cMem.read(u->address);
+			w8 hold = this->cMem->read(u->address);
 			this->carry = (hold >> 7) & 1;
 			hold <<= 1;
-			this->cMem.write(u->address, hold);
+			this->cMem->write(u->address, hold);
 			this->sZero(hold);
 			this->sNegative(hold);
 		}
@@ -450,7 +400,7 @@ struct CPU {
 
 	//BIT   - Test Bits in Memory with Accumulator
 	void bit(ins * u) {
-		w8 hold = this->cMem.read(u->address);
+		w8 hold = this->cMem->read(u->address);
 		this->overflow = (hold >> 6) & 1;
 		this->sZero(this->a & hold);
 		this->sNegative(hold);
@@ -517,19 +467,19 @@ struct CPU {
 	void clv(ins * u) { this->overflow = false; }
 
 	//CMP   - Compare Memory and Accumulator
-	void cmp(ins * u) { this->compare(this->a, this->cMem.read(u->address)); }
+	void cmp(ins * u) { this->compare(this->a, this->cMem->read(u->address)); }
 
 	//CPX   - Compare Memory and Index X
-	void cpx(ins * u) { this->compare(this->x, this->cMem.read(u->address)); }
+	void cpx(ins * u) { this->compare(this->x, this->cMem->read(u->address)); }
 
 	//CPY   - Compare Memory and Index Y
-	void cpy(ins * u) { this->compare(this->y, this->cMem.read(u->address)); }
+	void cpy(ins * u) { this->compare(this->y, this->cMem->read(u->address)); }
 
 	//DEC   - Decrement Memory by One
 	void dec(ins * u) {
-		w8 hold = this->cMem.read(u->address);
+		w8 hold = this->cMem->read(u->address);
 		--hold;
-		this->cMem.write(u->address, hold);
+		this->cMem->write(u->address, hold);
 		this->sZero(hold);
 		this->sNegative(hold);
 	}
@@ -551,16 +501,16 @@ struct CPU {
 
 	//EOR   - "Exclusive-Or" Memory with Accumulator
 	void eor(ins * u) {
-		this->a ^= this->cMem.read(u->address);
+		this->a ^= this->cMem->read(u->address);
 		this->sZero(this->a);
 		this->sNegative(this->a);
 	}
 
 	//INC   - Increment Memory by One
 	void inc(ins * u) {
-		w8 hold = this->cMem.read(u->address);
+		w8 hold = this->cMem->read(u->address);
 		++hold;
-		this->cMem.write(u->address, hold);
+		this->cMem->write(u->address, hold);
 		this->sZero(hold);
 		this->sNegative(hold);
 	}
@@ -590,21 +540,21 @@ struct CPU {
 
 	//LDA   - Load Accumulator with Memory
 	void lda(ins * u) {
-		this->a = this->cMem.read(u->address);
+		this->a = this->cMem->read(u->address);
 		this->sZero(this->a);
 		this->sNegative(this->a);
 	}
 
 	//LDX   - Load Index X with Memory
 	void ldx(ins * u) {
-		this->x = this->cMem.read(u->address);
+		this->x = this->cMem->read(u->address);
 		this->sZero(this->x);
 		this->sNegative(this->x);
 	}
 
 	//LDY   - Load Index Y with Memory
 	void ldy(ins * u) {
-		this->y = this->cMem.read(u->address);
+		this->y = this->cMem->read(u->address);
 		this->sZero(this->y);
 		this->sNegative(this->y);
 	}
@@ -619,10 +569,10 @@ struct CPU {
 		}
 
 		else {
-			w8 hold = this->cMem.read(u->address);
+			w8 hold = this->cMem->read(u->address);
 			this->carry = (hold >> 7) & 1;
 			hold <<= 1;
-			this->cMem.write(u->address, hold);
+			this->cMem->write(u->address, hold);
 			this->sZero(hold);
 			this->sNegative(hold);
 		}
@@ -633,7 +583,7 @@ struct CPU {
 
 	//ORA   - "OR" Memory with Accumulator
 	void ora(ins * u) {
-		this->a |= this->cMem.read(u->address);
+		this->a |= this->cMem->read(u->address);
 		this->sZero(this->a);
 		this->sNegative(this->a);
 	}
@@ -666,11 +616,11 @@ struct CPU {
 		}
 
 		else {
-			w8 hold2 = this->cMem.read(u->address);
+			w8 hold2 = this->cMem->read(u->address);
 			this->carry = (this->a >> 7) & 1;
 			hold2 <<= 1;
 			hold2 |= hold;
-			this->cMem.write(u->address, hold2);
+			this->cMem->write(u->address, hold2);
 			this->sZero(hold2);
 			this->sNegative(hold2);
 		}
@@ -688,10 +638,10 @@ struct CPU {
 		}
 
 		else {
-			w8 hold2 = this->cMem.read(u->address);
+			w8 hold2 = this->cMem->read(u->address);
 			this->carry = hold & 1;
 			hold2 = (hold2 >> 1) | (hold << 7);
-			this->cMem.write(u->address, hold2);
+			this->cMem->write(u->address, hold2);
 			this->sZero(hold2);
 			this->sNegative(hold2);
 		}
@@ -711,7 +661,7 @@ struct CPU {
 
 	//SBC   - Subtract Memory from Accumulator with Borrow
 	void sbc(ins * u) {
-		w8 hold1 = this->cMem.read(u->address);
+		w8 hold1 = this->cMem->read(u->address);
 		w8 hold2 = this->a;
 		w8 hold3 = w8(this->carry);
 
@@ -736,13 +686,13 @@ struct CPU {
 	void sei(ins * u) { this->interupt = true; }
 
 	//STA   - Store Accumulator in Memory
-	void sta(ins * u) { this->cMem.write(u->address, this->a); }
+	void sta(ins * u) { this->cMem->write(u->address, this->a); }
 
 	//STX   - Store Index X in Memory
-	void stx(ins * u) { this->cMem.write(u->address, this->x); }
+	void stx(ins * u) { this->cMem->write(u->address, this->x); }
 
 	//STY   - Store Index Y in Memory
-	void sty(ins * u) { this->cMem.write(u->address, this->y); }
+	void sty(ins * u) { this->cMem->write(u->address, this->y); }
 
 	//TAX   - Transfer Accumulator to Index X
 	void tax(ins * u) {

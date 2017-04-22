@@ -29,10 +29,12 @@ struct central : mem {
 	//For creation of CPU Memory, must contain current state of the system
 	sys * cm;
 
+	//Constructors & Destructor
 	central() = default;
+	central(sys * s);
 	virtual ~central() = default;
 
-	central * createCentral(sys * s);
+	//central * createCentral(sys * s);
 	w8 read(w16 adr);
 	void write(w16 adr, w8 out);
 
@@ -45,10 +47,12 @@ struct picture : mem {
 	//For creation of PPU Memory, must contain current state of the system
 	sys * pm;
 
+	//Constructors & Destructor
 	picture() = default;
+	picture(sys * s);
 	virtual ~picture() = default;
 
-	picture * createPM(sys * s);
+	//picture * createPM(sys * s);
 	w8 read(w16 adr);
 	void write(w16 adr, w8 out);
 

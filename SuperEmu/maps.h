@@ -48,8 +48,17 @@ struct maps1 {
 	int chrOff[2];			//Offsets used in value calculations for CHR
 
 
+	//Constructors & Destructor
+
 	maps1() = default;
-	public: ~maps1() { delete this; }
+
+	maps1(cart * r) {
+		cp = r;
+		sr = 0x10;
+		prgOff[1] = prgOffset(-1);
+	}
+
+	~maps1() = default;
 
 	//Basic Functions for Mapper Implementations
 
@@ -96,14 +105,6 @@ struct maps1 {
 		else std::abort();
 
 		this->loadReg(adr, out);
-	}
-
-	maps1 * createM1(cart * r) {
-		maps1 * x = new maps1;
-		x->cp = r;
-		x->sr = 0x10;
-		x->prgOff[1] = x->prgOffset(-1);
-		return x;
 	}
 
 	//Mapper 1 specific functions below...
@@ -222,14 +223,19 @@ struct maps2 {
 	int prgBOne, prgBTwo, prgBThree;	//PRG Banks 1, 2, 3
 
 
-	//Constructors
+	//Constructors & Destructor
 
 	maps2() = default;
-	public: ~maps2() { delete this; }
 
-	maps2(cart * a, int x, int y)
-		:cp(a), prgBOne(x), prgBTwo(y)
-	{ }
+	maps2(cart r) {
+		int hold1 = (r.prg.size() / 0x4000);
+		int hold2 = hold1 - 1;
+		cp = &r;
+		prgBOne = hold1;
+		prgBTwo = hold2;
+	}
+
+	~maps2() = default;
 
 
 	//Overrides
@@ -260,14 +266,6 @@ struct maps2 {
 
 		//Unsupported mapper type - TODO: Figure out other cases, if there are any?
 		else std::abort();
-	}
-
-
-	maps2 * createM2(cart r) {
-		int hold1 = (r.prg.size() / 0x4000);
-		int hold2 = hold1 - 1;
-		maps2 * x = new maps2(&r, hold1, hold2);
-		return x;
 	}
 
 };
@@ -301,8 +299,8 @@ struct maps7 {
 //Memory Mapper
 union maps {
 
-	maps1 m1;
-	maps2 m2;
+	maps1 * m1;
+	maps2 * m2;
 	maps3 m3;
 	maps4 m4;
 	maps7 m7;
@@ -313,21 +311,22 @@ union maps {
 	//Switches to designated map type for whatever member the union currently holds
 	w8 read(w16 adr, w8 mapType) {
 		switch (mapType) {
-		case '0': return m2.read(adr); break;
-		case '1': return m1.read(adr); break;
-		case '2': return m2.read(adr); break;
+		case '0': return m2->read(adr); break;
+		case '1': return m1->read(adr); break;
+		case '2': return m2->read(adr); break;
 		case '3': return m3.read(adr); break;
 		case '4': return m4.read(adr); break;
 		case '7': return m7.read(adr); break;
+		default: std::abort();
 		}
 	}
 
 	//Switches to designated map type for whatever member the union currently holds
 	void write(w16 adr, w8 out, w8 mapType) {
 		switch (mapType) {
-		case '0': m2.write(adr, out); break;
-		case '1': m1.write(adr, out); break;
-		case '2': m2.write(adr, out); break;
+		case '0': m2->write(adr, out); break;
+		case '1': m1->write(adr, out); break;
+		case '2': m2->write(adr, out); break;
 		case '3': m3.write(adr, out); break;
 		case '4': m4.write(adr, out); break;
 		case '7': m7.write(adr, out); break;

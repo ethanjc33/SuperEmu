@@ -4,16 +4,20 @@
 #include "nes.h"
 #include "ppu.h"
 
-//Initialization & PPU setup
-PPU * PPU::createPPU(sys * s) {
-	PPU * x = new PPU;
-	x->cc = s->cu;
-	x->pMem.createPM(s);
-	//Front and Back images -> must extract them from some other resource?
-	x->frame = 0;
-	x->scans = 240;
-	x->cycles = 340;
-	return x;
+//PPU Constructors
+
+PPU::PPU() = default;
+
+PPU::PPU(sys * s) {
+	cc = s->cu;
+	pMem = new picture(s);
+	//TODO: Front and Back images
+	frame = 0;
+	scans = 240;
+	cycles = 340;
 }
 
-//TODO: Dynamic Allocation of objects
+//PPU Destructor
+PPU::~PPU() {
+	delete pMem;
+}
