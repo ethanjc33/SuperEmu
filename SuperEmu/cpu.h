@@ -7,45 +7,155 @@
 #include "instruction.h"
 #include "mem.h"
 
+//Note: Removed object oriented CPU structure as it had no useful impact on program
+//Note: Specific opcode instructions achieved through documentation (posted elsewhere) in other implementations
+
 struct sys;
 
-//Central Processing Unit
-struct CPU {
-	CPU() = default;
-	virtual ~CPU() = default;
+
+//Global Constants - Necessary for execution of an instruction
+
+//Represents an opcode's addressing mode ID
+modeEnum::sourceMode modes[modeEnum::siz] = {
+	modeEnum::imp, modeEnum::xid, modeEnum::imp, modeEnum::xid,
+	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
+	modeEnum::imp, modeEnum::imm, modeEnum::acc, modeEnum::imm,
+	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
+	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
+	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
+	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
+	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx,
+	modeEnum::abs, modeEnum::xid, modeEnum::imp, modeEnum::xid,
+	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
+	modeEnum::imp, modeEnum::imm, modeEnum::acc, modeEnum::imm,
+	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
+	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
+	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
+	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
+	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx,
+	modeEnum::imp, modeEnum::xid, modeEnum::imp, modeEnum::xid,
+	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
+	modeEnum::imp, modeEnum::imm, modeEnum::acc, modeEnum::imm,
+	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
+	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
+	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
+	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
+	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx,
+	modeEnum::imp, modeEnum::xid, modeEnum::imp, modeEnum::xid,
+	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
+	modeEnum::imp, modeEnum::imm, modeEnum::acc, modeEnum::imm,
+	modeEnum::ind, modeEnum::abs, modeEnum::abs, modeEnum::abs,
+	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
+	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
+	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
+	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx,
+	modeEnum::imm, modeEnum::xid, modeEnum::imm, modeEnum::xid,
+	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
+	modeEnum::imp, modeEnum::imm, modeEnum::imp, modeEnum::imm,
+	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
+	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
+	modeEnum::zpx, modeEnum::zpx, modeEnum::zpy, modeEnum::zpy,
+	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
+	modeEnum::abx, modeEnum::abx, modeEnum::aby, modeEnum::aby,
+	modeEnum::imm, modeEnum::xid, modeEnum::imm, modeEnum::xid,
+	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
+	modeEnum::imp, modeEnum::imm, modeEnum::imp, modeEnum::imm,
+	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
+	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
+	modeEnum::zpx, modeEnum::zpx, modeEnum::zpy, modeEnum::zpy,
+	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
+	modeEnum::abx, modeEnum::abx, modeEnum::aby, modeEnum::aby,
+	modeEnum::imm, modeEnum::xid, modeEnum::imm, modeEnum::xid,
+	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
+	modeEnum::imp, modeEnum::imm, modeEnum::imp, modeEnum::imm,
+	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
+	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
+	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
+	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
+	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx,
+	modeEnum::imm, modeEnum::xid, modeEnum::imm, modeEnum::xid,
+	modeEnum::zop, modeEnum::zop, modeEnum::zop, modeEnum::zop,
+	modeEnum::imp, modeEnum::imm, modeEnum::imp, modeEnum::imm,
+	modeEnum::abs, modeEnum::abs, modeEnum::abs, modeEnum::abs,
+	modeEnum::rel, modeEnum::idx, modeEnum::imp, modeEnum::idx,
+	modeEnum::zpx, modeEnum::zpx, modeEnum::zpx, modeEnum::zpx,
+	modeEnum::imp, modeEnum::aby, modeEnum::imp, modeEnum::aby,
+	modeEnum::abx, modeEnum::abx, modeEnum::abx, modeEnum::abx
 };
 
+
+//Represents an opcode's number of cycles
+const w8 rate[0x100] = {
+	7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+	6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+	6, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 3, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+	6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 5, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+	2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 2, 6, 2, 6, 4, 4, 4, 4, 2, 5, 2, 5, 5, 5, 5, 5,
+	2, 6, 2, 6, 3, 3, 3, 3, 2, 2, 2, 2, 4, 4, 4, 4, 2, 5, 2, 5, 4, 4, 4, 4, 2, 4, 2, 4, 4, 4, 4, 4,
+	2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
+	2, 6, 2, 8, 3, 3, 5, 5, 2, 2, 2, 2, 4, 4, 6, 6, 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7
+};
+
+
+//Represents an opcode's page offset (add to cycles)
+const w8 pageOffset[0x100] = {
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0
+};
+
+
+//Represents an opcode's size
+const w8 bytes[0x100] = {
+	1, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
+	3, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
+	1, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
+	1, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
+	2, 2, 0, 0, 2, 2, 2, 0, 1, 0, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 0, 3, 0, 0,
+	2, 2, 2, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
+	2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0,
+	2, 2, 0, 0, 2, 2, 2, 0, 1, 2, 1, 0, 3, 3, 3, 0, 2, 2, 0, 0, 2, 2, 2, 0, 1, 3, 1, 0, 3, 3, 3, 0
+};
+
+
+
 //Components of the CPU
-struct regC : CPU {
+struct CPU {
 
 	//Registers
-	w16 pc;								//Program Counter - supports 65,536 direct memory locations
-	w8  a = 0;							//Accumulator - supports carrying, overflow detection, etc.
-	w8  x = 0;							//Index - used for several addressing modes
-	w8  y = 0;							//Index - used for several addressing modes
-	w8  s = 0;							//Stack Pointer - can be accessed using interupts, pulls, pushes, and transfers
-	w8  p = 0;							//Status Register - arithmetic, testing, and branch instructions
+	w16 pc;							//Program Counter - supports 65,536 direct memory locations
+	w8  a = 0;						//Accumulator - supports carrying, overflow detection, etc.
+	w8  x = 0;						//Index - used for several addressing modes
+	w8  y = 0;						//Index - used for several addressing modes
+	w8  s = 0;						//Stack Pointer - can be accessed using interupts, pulls, pushes, transfers
+	w8  p = 0;						//Status Register - arithmetic, testing, and branch instructions
 
-	//Status Flags						//Note: Bits 4 / 5 are not necessary here
-	bool carry;							//Bit 0
-	bool zero;							//Bit 1
-	bool interupt;						//Bit 2 (Interupt disable on / off)
-	bool decimal;						//Bit 3 (Exists for compatability)
-	bool overflow;						//Bit 6
-	bool negative;						//Bit 7
+	//Status Flags					//Note: Bits 4 / 5 are not necessary here
+	bool carry;						//Bit 0
+	bool zero;						//Bit 1
+	bool interupt;					//Bit 2 (Interupt disable on / off)
+	bool decimal;					//Bit 3 (Exists for compatability)
+	bool overflow;					//Bit 6
+	bool negative;					//Bit 7
 
 	//Counters & Such
-	interMode i;						//Interupt Mode - Three possible values
-	w64 cycles;							//Clock Cycle Counter
-	int staller;						//Number of stalled cycles
+	interEnum::interMode im;		//Interupt Mode - 3 possible values
+	modeEnum::sourceMode am;		//Addressing Mode - 13 possible values
+	w64 cycles;						//Clock Cycle Counter
+	int staller;					//Number of stalled cycles
 
 	//Memory Representation
-	central cMem;						//CPU Memory
+	central cMem;					//CPU Memory
 
 
 	//Constructors & Destructor
-	regC() = default;
-	virtual ~regC() = default;
+	CPU() = default;
+	~CPU() { delete this; }
 
 
 	//Flag Setter Functions - other flags set through indidvual opcode functions
@@ -58,23 +168,40 @@ struct regC : CPU {
 
 	//Enables Negative flag if bit is 0, disables otherwise
 	void sNegative(w8 b) {
-		if (b == 0) negative = false;
-		else negative = true;
+		if ((b & 0x80) != 0) this->negative = true;
+		else this->negative = false;
 	}
 
 	//Enables Carry flag if first bit is >= to second bit, disables otherwise
 	void sCarry(w8 d, w8 b) {
-		if (d < b) carry = false;
-		else carry = true;
+		if (d < b) this->carry = false;
+		else this->carry = true;
 		w8 hold = d - b;
 		sZero(hold);
 		sNegative(hold);
 	}
 
-	//Enables all flags
-	void sEnable() {
-		carry = true; zero = true; interupt = true;
-		decimal = true; overflow = true; negative = true;
+	//Resets Status Flags to Chosen State
+	void set(w8 b) {
+		this->zero = (b >> 1) & 1;
+		this->interupt = (b >> 2) & 1;
+		this->decimal = (b >> 3) & 1;
+		this->overflow = (b >> 6) & 1;
+		this->negative = (b >> 7) & 1;
+		this->carry = (b >> 0) & 1;
+	}
+
+	//Returns status flag states (based on bit shifts)
+	w8 enable() {
+		w8 hold;
+		//Must contain << notation for shifting and interpreting boolean to binary
+		hold |= this->carry << 0;
+		hold |= this->zero << 1;
+		hold |= this->interupt << 2;
+		hold |= this->decimal << 3;
+		hold |= this->overflow << 6;
+		hold |= this->negative << 7;
+		return hold;
 	}
 
 
@@ -82,17 +209,12 @@ struct regC : CPU {
 
 	//Creation of CPU in system - used in opcodes
 	CPU * createCPU(sys * s) {
-		regC x;
-		x.cMem.createCM(s);
-		x.reset();
-		return &x;
-	}
-
-	//Returns CPU to original state
-	void reset() {
-		this->s = 253;
-		this->pc = this->hilo(65532);
-		this->sEnable();
+		CPU * x = new CPU;
+		x->cMem.createCentral(s);
+		x->s = 253;
+		x->pc = x->hilo(65532);
+		x->set(0x24);
+		return x;
 	}
 
 	
@@ -101,11 +223,13 @@ struct regC : CPU {
 	//Adds CPU cycles - for various instructions that need to update cycle count
 	void branch(ins * u) {
 		++cycles;
-		if (u->procou != u->address) ++cycles;
+		if (test(u->procou, u->address)) ++cycles;
 	}
 
+	bool test(w16 p, w16 q) { return ((p & 0xFF00) != (q & 0xFF00)); }
+
 	//Comparison Test (for ease of use in specific opcodes)
-	void test(w8 p, w8 q) {
+	void compare(w8 p, w8 q) {
 		this->sZero(p - q);
 		this->sNegative(p - q);
 		if (p < q) this->carry = false;
@@ -121,19 +245,85 @@ struct regC : CPU {
 	}
 
 	//Emulates NES CPU bug found in original hardware
-	w16 bugger(w16 adr) {
+	w16 oops(w16 adr) {
 		w16 hi = this->cMem.read(w16(w8(adr) + 1));
 		w16 lo = this->cMem.read(adr);
 
 		return (hi << 0x08) | lo;
 	}
 
+
 	//Process an instruction - returns CPU cycles
 	int execute() {
+
+		//Halts execution round if cycle is stalled
 		if (this->staller > 0) { this->staller--; return 1; }
 		w64 hold = this->cycles;
 
-		//TODO: Figure out how to incorporate enum and switch statements successfully
+		//Trigger interupts for either NMI or IRQ
+		switch (this->im) {
+		case interEnum::nm: this->nmi(); break;
+		case interEnum::ir: this->irq(); break;
+		default: break;
+		}
+
+		//Set interupt enum type to none
+		this->im = interEnum::no;
+
+		//Fetch Instruction from PC & Match it to proper mode
+		w8 todo = this->cMem.read(this->pc);
+		this->am = modes[todo];
+
+		//Address and Page Flag
+		w16 adr = 0;
+		bool page = false;
+
+		//Solves for correct address location, stops if location does not exist
+		switch (this->am) {
+		case modeEnum::zop: adr = w16(this->cMem.read(1 + this->pc)); break;
+		case modeEnum::zpx: adr = w16(this->cMem.read(1 + this->pc) + this->x); break;
+		case modeEnum::zpy: adr = w16(this->cMem.read(1 + this->pc) + this->y); break;
+		case modeEnum::abs: adr = this->hilo(1 + this->pc); break;
+		case modeEnum::abx:
+			adr = this->hilo(1 + this->pc) + w16(this->x);
+			page = this->test(adr - w16(this->x), adr);
+			break;
+		case modeEnum::aby:
+			adr = this->hilo(1 + this->pc) + w16(this->y);
+			page = this->test(adr - w16(this->y), adr);
+			break;
+		case modeEnum::xid: adr = this->oops(w16(this->cMem.read(1 + this->pc) + this->x)); break;
+		case modeEnum::ind: adr = this->oops(w16(this->cMem.read(1 + this->pc))); break;
+		case modeEnum::idx:
+			adr = this->oops(w16(this->cMem.read(1 + this->pc) + this->y));
+			page = this->test(adr - w16(this->y), adr);
+			break;
+		case modeEnum::rel:
+		{	w16 temp = w16(this->cMem.read(1 + this->pc));
+			if (temp >= 80) adr = this->pc + temp + 2;
+			else adr = this->pc + temp - 254;
+			break; }
+		case modeEnum::acc: adr = 0; break;
+		case modeEnum::imm: adr = 1 + this->pc; break;
+		case modeEnum::imp: adr = 0; break;
+		default: std::abort();
+		}
+
+		//Opcode Sizes & Cycles
+		this->pc += w16(bytes[todo]);
+		this->cycles += w64(rate[todo]);
+		if (page == true) this->cycles += w64(pageOffset[todo]);
+
+		//Prompt an Opcode
+		ins u;
+		u.mode = this->am;
+		u.address = adr;
+		u.procou = this->pc;
+		this->prompt(todo, &u);
+
+		//Return the number of cycles we added during this execution
+		return int((this->cycles - hold));
+
 	}
 
 
@@ -141,27 +331,26 @@ struct regC : CPU {
 	//Note: "bytes" here refer to hi and lo
 
 	void push_byte(w8 b) {
-		this->cMem.write(256, b);
+		this->cMem.write((256 | w16(this->s)), b);
 		--s;
 	}
 
 	void push_bytes(w16 b) {
-		this->push_byte(w8(b));
-		this->push_byte(w8(0xFF));
+		w8 lo = w8(b & 0xFF);
+		w8 hi = w8(b >> 8);
+		this->push_byte(hi);
+		this->push_byte(lo);
 	}
 
 	w8 pop_byte() {
 		++s;
-		return this->cMem.read(256);
+		return this->cMem.read((256 | w16(this->s)));
 	}
 
 	w16 pop_bytes() {
-		//TODO: Make sure these are in order?
 		w16 lo = w16(this->pop_byte());
 		w16 hi = w16(this->pop_byte());
-
-		if (hi < 0x08) return hi;
-		else return lo;
+		return (hi << 0x08) | lo;
 	}
 
 
@@ -191,7 +380,20 @@ struct regC : CPU {
 
 	//ADC   - Add Memory to Accumulator with Carry
 	void adc(ins * u) {
+		w8 x = this->cMem.read(u->address);
+		w8 y = this->a;
+		w8 z = this->carry;
+		this->a = x + y + z;
+		this->sZero(this->a);
+		this->sNegative(this->a);
 
+		//Update Carry Flag
+		if ((int(x) + int(y) + int(z)) <= 256) this->carry = false;
+		else this->carry = true;
+
+		//Update Overflow Flag
+		if ((((y^(this->a)) & 0x80) == 0) && (((y^(this->a)) & 0x80) != 0)) this->overflow = true;
+		else this->overflow = false;
 	}
 
 
@@ -205,7 +407,21 @@ struct regC : CPU {
 
 	//ASL   - Shift Left One Bit (Memory or Accumulator)
 	void asl(ins * u) {
+		if (u->mode == modeEnum::sourceMode::acc) {
+			this->carry = (this->a >> 7) & 1;
+			this->a <<= 1;
+			this->sZero(this->a);
+			this->sNegative(this->a);
+		}
 
+		else {
+			w8 hold = this->cMem.read(u->address);
+			this->carry = (hold >> 7) & 1;
+			hold <<= 1;
+			this->cMem.write(u->address, hold);
+			this->sZero(hold);
+			this->sNegative(hold);
+		}
 	}
 
 	//BCC   - Branch on Carry Clear
@@ -301,19 +517,13 @@ struct regC : CPU {
 	void clv(ins * u) { this->overflow = false; }
 
 	//CMP   - Compare Memory and Accumulator
-	void cmp(ins * u) {
-		this->test(this->a, this->cMem.read(u->address));
-	}
+	void cmp(ins * u) { this->compare(this->a, this->cMem.read(u->address)); }
 
 	//CPX   - Compare Memory and Index X
-	void cpx(ins * u) {
-		this->test(this->x, this->cMem.read(u->address));
-	}
+	void cpx(ins * u) { this->compare(this->x, this->cMem.read(u->address)); }
 
 	//CPY   - Compare Memory and Index Y
-	void cpy(ins * u) {
-		this->test(this->y, this->cMem.read(u->address));
-	}
+	void cpy(ins * u) { this->compare(this->y, this->cMem.read(u->address)); }
 
 	//DEC   - Decrement Memory by One
 	void dec(ins * u) {
@@ -401,7 +611,21 @@ struct regC : CPU {
 
 	//LSR   - Shift Right One Bit(Memory or Accumulator)
 	void lsr(ins * u) {
+		if (u->mode == modeEnum::sourceMode::acc) {
+			this->carry = (this->a >> 7) & 1;
+			this->a <<= 1;
+			this->sZero(this->a);
+			this->sNegative(this->a);
+		}
 
+		else {
+			w8 hold = this->cMem.read(u->address);
+			this->carry = (hold >> 7) & 1;
+			hold <<= 1;
+			this->cMem.write(u->address, hold);
+			this->sZero(hold);
+			this->sNegative(hold);
+		}
 	}
 
 	//NOP   - No Operation
@@ -418,9 +642,7 @@ struct regC : CPU {
 	void pha(ins * u) { this->push_byte(this->a); }
 
 	//PHP   - Push Processor Status on Stack
-	void php(ins * u) {
-
-	}
+	void php(ins * u) { this->push_byte(this->enable() | 0x10); }
 
 	//PLA   - Pull Accumulator from Stack
 	void pla(ins * u) {
@@ -430,23 +652,55 @@ struct regC : CPU {
 	}
 
 	//PLP   - Pull Processor Status from Stack
-	void plp(ins * u) {
-
-	}
+	void plp(ins * u) { this->set((this->pop_byte() & 0xEF) | 0x20); }
 
 	//ROL   - Rotate One Bit Left (Memory or Accumulator)
 	void rol(ins * u) {
-		
+		w8 hold = w8(this->carry);
+
+		if (u->mode == modeEnum::sourceMode::acc) {
+			this->carry = (this->a >> 7) & 1;
+			this->a = (this->a << 7) | hold;
+			this->sZero(this->a);
+			this->sNegative(this->a);
+		}
+
+		else {
+			w8 hold2 = this->cMem.read(u->address);
+			this->carry = (this->a >> 7) & 1;
+			hold2 <<= 1;
+			hold2 |= hold;
+			this->cMem.write(u->address, hold2);
+			this->sZero(hold2);
+			this->sNegative(hold2);
+		}
 	}
 
 	//ROR   - Rotate One Bit Right (Memory or Accumulator)
 	void ror(ins * u) {
+		w8 hold = w8(this->carry);
 
+		if (u->mode == modeEnum::sourceMode::acc) {
+			this->carry = this->a & 1;
+			this->a = (this->a >> 1) | (hold << 7);
+			this->sZero(this->a);
+			this->sNegative(this->a);
+		}
+
+		else {
+			w8 hold2 = this->cMem.read(u->address);
+			this->carry = hold & 1;
+			hold2 = (hold2 >> 1) | (hold << 7);
+			this->cMem.write(u->address, hold2);
+			this->sZero(hold2);
+			this->sNegative(hold2);
+		}
 	}
 
 	//RTI   - Return from Interrupt
 	void rti(ins * u) {
-
+		this->set((this->pop_byte() & 0xEF) | 0x20);
+		this->pc = this->pop_bytes();
 	}
 
 	//RTS   - Return from Subroutine
@@ -866,5 +1120,6 @@ struct regC : CPU {
 	}
 
 };
+
 
 #endif

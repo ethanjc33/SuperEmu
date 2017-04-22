@@ -9,20 +9,10 @@
 
 struct sys;
 
-//Picture Processing Unit
-struct PPU {
-	PPU() = default;
-	virtual ~PPU() = default;
-
-	//Records clock cycles, scanlines, frames
-	void cyc() {
-
-	}
-
-};
+#include "nes.h"
 
 //Components of the PPU
-struct regP : PPU {
+struct PPU {
 
 	//Note: The parts listed out here were much less obvious than the CPU
 	//i.e. therefore subject to change if more or less pieces are necessary
@@ -60,12 +50,12 @@ struct regP : PPU {
 	w8 data;							//When reading from $2003
 
 	//CPU
-	regC cc;								//For updating cycles and updating flags during processes
+	CPU cc;								//For updating cycles and updating flags during processes
 
 
 	//Constructors & Destructor
-	regP() = default;
-	virtual ~regP() = default;
+	PPU() = default;
+	~PPU() { delete this; }
 
 
 	//Memory mapped registers to the CPU
@@ -195,25 +185,7 @@ struct regP : PPU {
 		if ((this->cc.cycles % 2) == 1) this->cc.staller++;
 	}
 
-
-	//Initialization & PPU setup
-	PPU * createPPU(sys * s) {
-		regP x;
-		x.cc = s->cu;
-		x.pMem.createPM(s);
-		//Front and Back images -> must extract them from some other resource?
-		x.reset();
-		return &x;
-	}
-
-	//Returns PPU to original state
-	void reset() {
-		//PPU starts on these values'
-		this->frame = 0;
-		this->scans = 240;
-		this->cycles = 340;
-
-	}
+	PPU * createPPU(sys * s);
 
 	//Process a cycle in the PPU
 	void execute() {
@@ -242,14 +214,21 @@ struct regP : PPU {
 		case (0x2002): return this->PPUstatus();	break;
 		case (0x2004): return this->OAMrData();		break;
 		case (0x2007): return this->PPUrData();		break;
+		default: return 0; break;
 		}
 	}
 
 
 	//Read current palette state
-	w8 palettePrompt(w16 adr) {
+	w8 paletteRPrompt(w16 adr) {
 		if ((adr >= 0x10) && ((adr % 4) == 0)) adr -= 0x10;
 		return this->palette[adr];
+	}
+
+	//Write current palette state
+	void paletteWPrompt(w16 adr, w8 out) {
+		if ((adr >= 16) && ((adr % 4) == 0)) adr -= 16;
+		this->palette[adr] = out;
 	}
 
 
@@ -257,6 +236,11 @@ struct regP : PPU {
 		//Note: 14 is an arbitrary number here, setting for delays which could be changed
 		if (!(this->past) && (this->present && this->future)) this->stasis = 14;
 		this->past = (this->present && this->future);
+	}
+
+	
+	void cyc() {
+
 	}
 
 

@@ -24,56 +24,11 @@ struct sys;
 		mostly focus on ROMs that don't use mappers (i.e. Donkey Kong, Balloon Fighter,
 		and Pac-Man). This said, the mappers only exist here for completeness.*/
 
-//Memory Mapper
-template <typename T = sys>
-struct maps {
-
-	maps() = default;
-	virtual ~maps() = default;
-
-	//Creates a new memory mapper based on ROM being used
-	maps * createMaps(T * s) {
-		cart r = s->ridge;
-
-		//The cartridge's memory map ID will be:
-		//0 - Mapper 2 (actually none from what the documentation suggests)
-		//1 - Mapper 1, 2 - Mapper 2, and so on
-
-		switch (r.map) {
-		case '0': return createM2(r);
-		case '1': return createM1(r);
-		case '2': return createM2(r);
-		case '3': return createM3(r);
-		case '4': return createM4(r);
-		case '7': return createM7(r);
-		}
-
-	}
-
-
-	/*Memory Mapper functions - similar to memory implementation
-	  Difference being that the memory class affects all classes
-	  while this focuses on manipulating the cartridge.*/
-
-	virtual w8 read(w16 adr) { } 
-
-	virtual void write(w16 adr, w8 out) { }
-
-	virtual void step() { }
-
-	//Individual Mapper Creation (fixes error - TODO: way around this?)
-	virtual maps<> * createM1(cart r) { }
-	virtual maps<> * createM2(cart r) { }
-	virtual maps<> * createM3(cart r) { }
-	virtual maps<> * createM4(cart r) { }
-	virtual maps<> * createM7(cart r) { }
-
-};
 
 //Implementation for individual memory mappers contained in iNES translation
 
 //Memory Mapper 1 - MMC1
-struct maps1 : maps<> {
+struct maps1 {
 
 	/*All members here have values determined by the mapper type.
 	  That is, these are important enough values to track, yet
@@ -93,12 +48,10 @@ struct maps1 : maps<> {
 	int chrOff[2];			//Offsets used in value calculations for CHR
 
 
-	//Constructors & Destructor
 	maps1() = default;
-	virtual ~maps1() = default;
+	public: ~maps1() { delete this; }
 
-
-	//Overrides
+	//Basic Functions for Mapper Implementations
 
 	w8 read(w16 adr) {
 		//Determines values for members based on address location
@@ -145,29 +98,27 @@ struct maps1 : maps<> {
 		this->loadReg(adr, out);
 	}
 
-	void step() { }
-
-	maps<> * createM1(cart * r) {
-		maps1 x;
-		x.cp = r;
-		x.sr = 0x10;
-		x.prgOff[1] = x.prgOffset(-1);
-		return &x;
+	maps1 * createM1(cart * r) {
+		maps1 * x = new maps1;
+		x->cp = r;
+		x->sr = 0x10;
+		x->prgOff[1] = x->prgOffset(-1);
+		return x;
 	}
 
 	//Mapper 1 specific functions below...
 
 	//Load to registers
 	void loadReg(w16 adr, w8 out) {
-		if (out == 0x80) {
+		if ((out & 0x80) == 0x80) {
 			this->sr = 0x10;
-			this->writeCon(0x0C);
+			this->writeCon(this->co | 0x0C);
 		}
 
 		else {
-			bool hold;
-			if (this->sr == 1) hold = true;
-			this->sr = 1;
+			bool hold = (this->sr & 1) == 1;
+			this->sr >>= 1;
+			this->sr |= (out & 1) << 4;
 			if (hold == true) {
 				writeReg(adr, this->sr);
 				this->sr = 0x10;
@@ -193,10 +144,19 @@ struct maps1 : maps<> {
 	//Write to control field
 	void writeCon(w8 out) {
 		this->co = out;
-		this->chrMode = 0;
-		this->prgMode = 0;
-		this->cp->mir %= 3;
+		this->chrMode = (out >> 4) & 1;
+		this->prgMode = (out >> 2) & 3;
+		w8 hold = out & 3;
+
 		//Update mirror values
+
+		switch (hold) {
+		case (0): this->cp->mir = mirEnum::mirMode::singleZero; break;		//Single 0 mode
+		case (1): this->cp->mir = mirEnum::mirMode::singleOne; break;		//Single 1 mode
+		case (2): this->cp->mir = mirEnum::mirMode::vertical; break;		//Vertical mode
+		case (3): this->cp->mir = mirEnum::mirMode::horizontal; break;		//Horizontal mode
+		}
+
 		this->update();
 	}
 
@@ -230,10 +190,14 @@ struct maps1 : maps<> {
 		//Case 3 - Opposite of Case 2
 
 		switch (this->prgMode) {
-		case '0': this->prgOff[0] = this->prgOffset(0xFE); this->prgOff[1] = this->prgOffset(1); break;
-		case '1': this->prgOff[0] = this->prgOffset(0xFE); this->prgOff[1] = this->prgOffset(1); break;
-		case '2': this->prgOff[0] = 0; this->prgOff[1] = this->prgOffset(this->prgBank); break;
-		case '3': this->prgOff[0] = this->prgOffset(this->prgBank); this->prgOff[1] = this->prgOffset(-1); break;
+		case '0': this->prgOff[0] = this->prgOffset(int(this->prgBank & 0xFE));
+				  this->prgOff[1] = this->prgOffset(int(1 & this->prgBank));
+				  break;
+		case '1': this->prgOff[0] = this->prgOffset(int(this->prgBank & 0xFE));
+				  this->prgOff[1] = this->prgOffset(int(1 & this->prgBank));
+				  break;
+		case '2': this->prgOff[0] = 0; this->prgOff[1] = this->prgOffset(int(this->prgBank)); break;
+		case '3': this->prgOff[0] = this->prgOffset(int(this->prgBank)); this->prgOff[1] = this->prgOffset(-1); break;
 		}
 
 		//CHR
@@ -241,8 +205,10 @@ struct maps1 : maps<> {
 		//Case 1: switch separate 4KB banks
 
 		switch (this->chrMode) {
-		case '0': this->chrOff[0] = this->chrOffset(0xFE); this->chrOff[1] = this->chrOffset(1); break;
-		case '1': this->chrOff[0] = this->chrOffset(chrBOne); this->chrOff[1] = this->chrOffset(chrBTwo); break;
+		case '0': this->chrOff[0] = this->chrOffset(int(this->chrBOne & 0xFE));
+				  this->chrOff[1] = this->chrOffset(int(this->chrBOne | 1));
+				  break;
+		case '1': this->chrOff[0] = this->chrOffset(int(chrBOne)); this->chrOff[1] = this->chrOffset(int(chrBTwo)); break;
 		}
 	}
 
@@ -250,18 +216,19 @@ struct maps1 : maps<> {
 
 
 //Memory Mapper 2 - MMC2
-struct maps2 : maps<> {
+struct maps2 {
 
 	cart * cp;							//Cartridge pointer
 	int prgBOne, prgBTwo, prgBThree;	//PRG Banks 1, 2, 3
 
 
-	//Constructors & Destructor
-	maps2() = default;
-	virtual ~maps2() = default;
+	//Constructors
 
-	maps2(cart * a, int x, int y, int z)
-		:cp(a), prgBOne(x), prgBTwo(y), prgBThree(z)
+	maps2() = default;
+	public: ~maps2() { delete this; }
+
+	maps2(cart * a, int x, int y)
+		:cp(a), prgBOne(x), prgBTwo(y)
 	{ }
 
 
@@ -295,44 +262,79 @@ struct maps2 : maps<> {
 		else std::abort();
 	}
 
-	void step() { }
 
-	maps<> * createM2(cart r) {
+	maps2 * createM2(cart r) {
 		int hold1 = (r.prg.size() / 0x4000);
 		int hold2 = hold1 - 1;
-		return &(maps2(&r, hold1, 0, hold2));
+		maps2 * x = new maps2(&r, hold1, hold2);
+		return x;
 	}
 
 };
 
 
 //TODO: Figure out other mappers as to emulate more ROMs
+
 //Memory Mapper 3
-struct maps3 : maps<> {
-
-	maps<> * createM3(cart r) {
-
-	}
+struct maps3 {
+	maps3 * createM3(cart r) { return nullptr; }
+	w8 read(w16 adr) { return 0; }
+	void write(w16 adr, w8 out) { }
 };
 
-
-//TODO: Figure out other mappers as to emulate more ROMs
 //Memory Mapper 4
-struct maps4 : maps<> {
-
-	maps<> * createM4(cart r) {
-
-	}
+struct maps4 {
+	maps4 * createM4(cart r) { return nullptr; }
+	w8 read(w16 adr) { return 0; }
+	void write(w16 adr, w8 out) { }
 };
 
-
-//TODO: Figure out other mappers as to emulate more ROMs
 //Memory Mapper 7
-struct maps7 : maps<> {
-
-	maps<> * createM7(cart r) {
-
-	}
+struct maps7 {
+	maps7 * createM7(cart r) { return nullptr; }
+	w8 read(w16 adr) { return 0; }
+	void write(w16 adr, w8 out) { }
 };
+
+
+
+//Memory Mapper
+union maps {
+
+	maps1 m1;
+	maps2 m2;
+	maps3 m3;
+	maps4 m4;
+	maps7 m7;
+
+	//Creates a new memory mapper based on ROM being used
+	void * createMaps(sys * s);
+
+	//Switches to designated map type for whatever member the union currently holds
+	w8 read(w16 adr, w8 mapType) {
+		switch (mapType) {
+		case '0': return m2.read(adr); break;
+		case '1': return m1.read(adr); break;
+		case '2': return m2.read(adr); break;
+		case '3': return m3.read(adr); break;
+		case '4': return m4.read(adr); break;
+		case '7': return m7.read(adr); break;
+		}
+	}
+
+	//Switches to designated map type for whatever member the union currently holds
+	void write(w16 adr, w8 out, w8 mapType) {
+		switch (mapType) {
+		case '0': m2.write(adr, out); break;
+		case '1': m1.write(adr, out); break;
+		case '2': m2.write(adr, out); break;
+		case '3': m3.write(adr, out); break;
+		case '4': m4.write(adr, out); break;
+		case '7': m7.write(adr, out); break;
+		}
+	}
+
+};
+
 
 #endif

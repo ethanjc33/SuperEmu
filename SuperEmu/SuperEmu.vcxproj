@@ -143,6 +143,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="maps.cpp" />
+    <ClCompile Include="mem.cpp" />
+    <ClCompile Include="ppu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="apu.h" />

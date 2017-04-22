@@ -9,6 +9,7 @@
 #define INSTRUCTION_HPP
 
 #include <stdint.h>
+#include <cstdlib>
 
 typedef uint_least8_t w8;		//Certain elements (i.e. registers) are all a byte wide
 typedef uint_least16_t w16;		//Certain elements (i.e. program counter) are two bytes wide
@@ -16,16 +17,37 @@ typedef uint_least32_t w32;		//Certain elements (i.e. iNES identifiers) could be
 typedef uint_least64_t w64;		//Certain elements (i.e. clock cycle counter) require more bytess
 
 
+//Enums
+
+//Interupt Modes for CPU (none, NMI, IRQ)
+namespace interEnum { enum interMode { no, nm, ir };  }
+
+//Address Modes for CPU (helpful in determining address for instructions)
+namespace modeEnum {
+	enum sourceMode {
+		zop = 0, zpx, zpy,				//Zero Page, Zero Page (x), Zero Page (y)
+		abs, abx, aby,					//Absolute, Absolute (x), Absolute (y)
+		xid, ind, idx,					//Indexed Indirect, Indirect, Indirect Indexed
+		rel, acc, imm, imp,				//Relative, Accumulator, Immediate, Implicit
+		siz = 256						//Size Counter for enum arrays
+	};
+}
+
+//Mirror mode qualifiers
+namespace mirEnum {
+	enum mirMode {
+		singleZero = 0, singleOne,
+		vertical, horizontal
+	};
+}
+
+
 //Instruction Package - Allows for simpler opcode functionality / Saves space in repeating opcodes
 struct ins {
-	w16 address;				//Address
-	w16 procou;					//Program Counter
-	w8  mode;					//Mode
+	w16 address;						//Address
+	w16 procou;							//Program Counter
+	modeEnum::sourceMode mode;			//Mode
 };
-
-
-//Interupt Modes for CPU
-typedef enum interMode { no, nm, ir } interMode;
 
 
 //PPU Register Packages - contains elements necessary for those functions defined in ppu.h
