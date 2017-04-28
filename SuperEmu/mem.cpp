@@ -19,10 +19,10 @@ w8 central::read(w16 adr) {
 	if (adr < 0x2000) return this->cm->ram[adr % 2048];
 
 	//PPU - Register Case One
-	else if (adr < 0x4000) return this->cm->pu.regRPrompt((adr % 8) + 8192);
+	else if (adr < 0x4000) return this->cm->pu->regRPrompt((adr % 8) + 8192);
 
 	//PPU - Register Case Two
-	else if (adr == 0x4014) return this->cm->pu.regRPrompt(adr);
+	else if (adr == 0x4014) return this->cm->pu->regRPrompt(adr);
 
 	//APU
 	else if (adr == 0x4015) return 0; //Add: this->cm->au.regRPrompt(adr);
@@ -37,7 +37,7 @@ w8 central::read(w16 adr) {
 	else if (adr < 0x6000) return 0;
 
 	//Mapper
-	else if (adr >= 0x6000) return this->cm->mmc.read(adr, this->cm->ridge.map);
+	else if (adr >= 0x6000) return this->cm->mmc->read(adr, this->cm->ridge->map);
 
 	else std::abort();
 
@@ -51,16 +51,16 @@ void central:: write(w16 adr, w8 out) {
 	if (adr < 0x2000) out = this->cm->ram[adr % 2048];
 
 	//PPU - Register Case One
-	else if (adr < 0x4000) this->cm->pu.regWPrompt((adr % 8) + 8192, out);
+	else if (adr < 0x4000) this->cm->pu->regWPrompt((adr % 8) + 8192, out);
 
 	//APU - Register Case One
-	else if (adr < 0x4000); //Add: this->cm->au.regWPrompt(adr, out);
+	else if (adr < 0x4000); //Add: this->cm->au->regWPrompt(adr, out);
 
 	//PPU - Register Case Two
-	else if (adr == 0x4014) this->cm->pu.regWPrompt(out, adr);
+	else if (adr == 0x4014) this->cm->pu->regWPrompt(out, adr);
 
 	//APU - Register Case Two
-	else if (adr == 0x4015); //Add: this->cm->au.regWPrompt(adr, out);
+	else if (adr == 0x4015); //Add: this->cm->au->regWPrompt(adr, out);
 
 	//Controller One
 	else if (adr == 0x4016) {
@@ -75,7 +75,7 @@ void central:: write(w16 adr, w8 out) {
 	else if (adr < 0x6000); //TODO
 
 	//Mapper
-	else if (adr >= 0x6000) this->cm->mmc.write(adr, out, this->cm->ridge.map);
+	else if (adr >= 0x6000) this->cm->mmc->write(adr, out, this->cm->ridge->map);
 
 	//Register did not exist - immediately stop
 	else std::abort();
@@ -94,13 +94,13 @@ w8 picture::read(w16 adr) {
 	adr %= 0x4000;
 
 	//Mapper
-	if (adr < 0x2000) return this->pm->mmc.read(adr, this->pm->ridge.map);
+	if (adr < 0x2000) return this->pm->mmc->read(adr, this->pm->ridge->map);
 
 	//Establishes mirror mode to be used
-	else if (adr < 0x3F00) return 0; //Add: this->pm->pu.table[mirLookup(this->pm->ridge.mir, adr) % 2048];
+	else if (adr < 0x3F00) return 0; //Add: this->pm->pu->table[mirLookup(this->pm->ridge.mir, adr) % 2048];
 
 	//Read from palette register
-	else if (adr < 0x4000) return this->pm->pu.paletteRPrompt((adr % 32));
+	else if (adr < 0x4000) return this->pm->pu->paletteRPrompt((adr % 32));
 
 	else std::abort();
 
@@ -111,13 +111,13 @@ void picture::write(w16 adr, w8 out) {
 	adr %= 0x4000;
 
 	//Mapper
-	if (adr < 0x2000) this->pm->mmc.read(adr, this->pm->ridge.map);
+	if (adr < 0x2000) this->pm->mmc->read(adr, this->pm->ridge->map);
 
 	//Establishes mirror mode to be used
 	else if (adr < 0x3F00); //Add: out = this->pm->pu.table[mirLookup(adr, this->pm->ridge.mir) % 2048];
 
 	//Write to palette register
-	else if (adr < 0x4000) this->pm->pu.paletteWPrompt((adr % 32), out);
+	else if (adr < 0x4000) this->pm->pu->paletteWPrompt((adr % 32), out);
 
 	//Register did not exist - immediately stop
 	else std::abort();

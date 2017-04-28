@@ -14,6 +14,7 @@
 struct APU {
 
 	APU() = default;
+	~APU() = default;
 
 	//Register Read
 	w8 regRPrompt(w16 adr) {
@@ -26,7 +27,8 @@ struct APU {
 	}
 
 
-	void cyc() {
+	//Process
+	void execute() {
 
 	}
 

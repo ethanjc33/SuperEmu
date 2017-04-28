@@ -22,7 +22,7 @@ struct cart {
 
 	
 	//Constructors & Destructor
-	cart() = default;
+	cart();
 
 	//Constructor for iNES file format return
 	cart(std::vector<w8> prg, std::vector<w8> chr, w8 map, mirEnum::mirMode mir, w8 bat)
@@ -50,8 +50,6 @@ struct rom {
 	w8  oneByte;			//Control Byte One - each bit does something different
 	w8  twoByte;			//Control Byte Two - each bit does something different
 	w8  ramBank;			//Number of 8KB RAM banks - assumed to be one page of RAM when 0
-
-	cart * openFile();
 
 };
 #pragma pack(pop, r1)

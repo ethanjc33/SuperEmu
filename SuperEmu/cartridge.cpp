@@ -7,7 +7,7 @@ by byte since the beginning of every iNES file is kept in the same exact format,
 actually handle parsing. After we extract all the necessary data, we are done with the file.
 */
 
-cart * rom::openFile() {
+cart::cart() {
 
 	rom contents = rom{};
 	std::string fileName;
@@ -50,27 +50,20 @@ cart * rom::openFile() {
 	w8 r = contents.oneByte >> 4;
 	w8 s = (contents.twoByte >> 3) & 1;
 	w8 m = r | s << 1;
-	mirEnum::mirMode mirror = mirEnum::mirMode(m);
+	mir = mirEnum::mirMode(m);
 
 	//Battery
-	w8 bat = (contents.oneByte >> 1) & 1;
+	bat = (contents.oneByte >> 1) & 1;
 
 	//Trainer may be present, but we'll assume it's not for simplicty's sake
 	//Would only throw an error anyway if it was there, we don't pass it
 
 	//Read PRG-ROM Banks
-	std::vector<w8> prg;
 	prg.resize(contents.prgBank * 0x4000);
 
 
 	//Read CHR-ROM Banks (provide if not in file as to not set size to 0)
-	std::vector<w8> chr;
 	if (contents.chrBank == 0) { chr.resize(0x2000); }
 	else { chr.resize(contents.chrBank * 0x2000); }
-
-
-	//Return Cartridge representation
-	cart * hold = new cart(prg, chr, map, mirror, bat);
-	return hold;
 
 }

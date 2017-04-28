@@ -305,8 +305,14 @@ union maps {
 	maps4 m4;
 	maps7 m7;
 
-	//Creates a new memory mapper based on ROM being used
-	void * createMaps(sys * s);
+	maps(cart r) {
+		switch (r.map) {
+		case (0): m2 = new maps2;
+		case (1): m1 = new maps1;
+		case (2): m2 = new maps2;
+		default: std::abort();
+		}
+	}
 
 	//Switches to designated map type for whatever member the union currently holds
 	w8 read(w16 adr, w8 mapType) {

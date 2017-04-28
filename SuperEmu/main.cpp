@@ -6,10 +6,19 @@ Citation: https://nesdev.com/ - huge help when figuring specific values and repr
 
 #include "nes.h"
 
+//Note: Although this emulator *almost* fully represents what I have seen to be the simplest
+//		and closest representation of the NES' hardware, it still lacks a dedicated UI system
+//		so the execution here in main is not complete / fully functional. Command line
+//		UI has been used in the meantime.
+
 //Main Application
 int main() {
 
-	//TODO: Load the ROM file, start system to operate upon it forever
+	sys nes;
+	while (true) {
+		nes.execute();
+		nes.frameClock();
+	}
 
 	return 0;
 }
