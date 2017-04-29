@@ -14,7 +14,7 @@ cart::cart() {
 	std::fstream x;
 
 	//Open File via user prompt
-	std::cout << "/nHello and welcome to Super Emu . . .\n\n";
+	std::cout << "Hello and welcome to Super Emu . . .\n\n";
 	std::cout << "Enter the name of a .nes file in this applications's directory:\n";
 	std::getline(std::cin, fileName);
 	x.open(fileName + ".nes", std::fstream::out | std::fstream::binary);
